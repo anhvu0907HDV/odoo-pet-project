@@ -1,0 +1,32 @@
+<odoo>
+  <!-- FORM VIEW -->
+  <record id="view_property_offer_form" model="ir.ui.view">
+    <field name="name">estate.property.offer.form</field>
+    <field name="model">estate.property.offer</field>
+    <field name="arch" type="xml">
+      <form string="Offer">
+        <header>
+          <button name="action_accept"
+            type="object"
+            string="Accept"
+            class="btn-success" />
+
+          <button name="action_refuse"
+            type="object"
+            string="Refuse"
+            class="btn-danger" />
+
+          <field name="state" widget="statusbar" />
+        </header>
+
+        <sheet>
+          <group>
+            <field name="price" />
+            <field name="partner_id" />
+            <field name="property_id" />
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+</odoo>

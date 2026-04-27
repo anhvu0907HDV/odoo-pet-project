@@ -1,14 +1,14 @@
 <odoo>
-    <menuitem id="estate_menu_root" name="Real Estate"/>
+    <menuitem id="estate_menu_root" name="Real Estate" />
 
     <record id="action_property" model="ir.actions.act_window">
         <field name="name">Properties</field>
         <field name="res_model">estate.property</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">kanban,tree,form</field>
     </record>
 
     <menuitem id="estate_menu_properties"
-              name="Properties"
-              parent="estate_menu_root"
-              action="action_property"/>
+        name="Properties"
+        parent="estate_menu_root"
+        action="action_property" />
 </odoo>

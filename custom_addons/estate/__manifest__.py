@@ -2,7 +2,6 @@
 {
     'name': "Real Estate",
     'version': '1.0',
-    'depends': ['base'],
     'application': True,
     'summary': "Short (1 phrase/line) summary of the module's purpose",
 
@@ -20,7 +19,7 @@ Long description of module's purpose
     'version': '0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['base'],
+    'depends': ['base', 'mail'],
 
     # always loaded
     'data': [
@@ -28,6 +27,7 @@ Long description of module's purpose
         'views/views.xml',
         'views/templates.xml',
         'views/property_views.xml',
+        'views/property_offer_views.xml',
         'views/menu.xml',
     ],
     # only loaded in demonstration mode
