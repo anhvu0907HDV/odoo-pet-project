@@ -7,12 +7,13 @@ from odoo.exceptions import UserError, ValidationError
 class EstatePropertyOffer(models.Model):
     _name = 'estate.property.offer'
     _description = 'Property Offer'
+    _inherit = ['estate.notification.mixin']
     _order = 'price desc'
 
     price = fields.Float(required=True)
     partner_id = fields.Many2one('res.partner', required=True)
     property_id = fields.Many2one('estate.property', required=True, ondelete='cascade')
-    currency_id = fields.Many2one('res.currency', default=lambda self: self.env.company.currency_id.id, readonly=True)
+    currency_id = fields.Many2one('res.currency', related='property_id.currency_id', readonly=True)
     validity = fields.Integer(default=7)
     deadline = fields.Date(compute='_compute_deadline', inverse='_inverse_deadline', store=True)
     state = fields.Selection(
@@ -29,6 +30,13 @@ class EstatePropertyOffer(models.Model):
         ('estate_property_offer_price_positive', 'CHECK(price > 0)', 'Offer price must be greater than 0.'),
         ('estate_property_offer_validity_positive', 'CHECK(validity >= 0)', 'Validity must be 0 or greater.'),
     ]
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        offers = super().create(vals_list)
+        properties = offers.mapped('property_id').filtered(lambda property_record: property_record.state == 'new')
+        properties.write({'state': 'offer'})
+        return offers
 
     # ========================
     # CONSTRAINTS
@@ -79,22 +87,49 @@ class EstatePropertyOffer(models.Model):
     # ========================
 
     def action_accept(self):
-        for record in self:
-            if record.property_id.state in ('cancel', 'sold'):
-                raise UserError("You cannot accept offers for sold/cancelled properties.")
+        self.ensure_one()
+        self._check_manager_permission('accept offers')
+        if self.property_id.state in ('cancel', 'sold'):
+            raise UserError("You cannot accept offers for sold/cancelled properties.")
 
-            record.property_id.offer_ids.filtered(
-                lambda offer: offer.id != record.id and offer.state != 'refused'
-            ).write({'state': 'refused'})
+        self.property_id.offer_ids.filtered(
+            lambda offer: offer.id != self.id and offer.state != 'refused'
+        ).write({'state': 'refused'})
 
-            record.write({'state': 'accepted'})
+        self.write({'state': 'accepted'})
 
-            record.property_id.write({
-                'buyer_id': record.partner_id.id,
-                'state': 'offer'
-            })
+        self.property_id.write({
+            'buyer_id': self.partner_id.id,
+            'selling_price': self.price,
+            'state': 'offer',
+        })
+        return self._notify_action("Offer accepted successfully.", "success")
 
     def action_refuse(self):
-        if any(offer.state == 'accepted' for offer in self):
+        self.ensure_one()
+        if self.state == 'accepted':
             raise UserError("Cannot refuse an accepted offer. Accept another offer instead.")
         self.write({'state': 'refused'})
+        self._sync_property_state_after_refuse()
+        return self._notify_action("Offer has been refused.", "warning")
+
+    def action_set_pending(self):
+        self.ensure_one()
+        if self.state == 'pending':
+            return self._notify_action("Offer is already pending.", "info")
+        if self.state == 'accepted':
+            raise UserError("Cannot reset an accepted offer to pending.")
+        self.write({'state': 'pending'})
+        if self.property_id.state == 'new':
+            self.property_id.state = 'offer'
+        return self._notify_action("Offer moved back to pending.", "info")
+
+    def _sync_property_state_after_refuse(self):
+        self.ensure_one()
+        remaining_active_offers = self.property_id.offer_ids.filtered(lambda offer: offer.state in ('pending', 'accepted'))
+        if not remaining_active_offers and self.property_id.state == 'offer':
+            self.property_id.write({'state': 'new', 'buyer_id': False, 'selling_price': 0})
+
+    def _check_manager_permission(self, action_label):
+        if not self.env.user.has_group('estate.group_estate_manager'):
+            raise UserError(f'Only Estate Manager can {action_label}.')

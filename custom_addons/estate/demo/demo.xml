@@ -1,30 +1,65 @@
 <odoo>
     <data>
-<!--
-          <record id="object0" model="estate.estate">
-            <field name="name">Object 0</field>
-            <field name="value">0</field>
-          </record>
+        <record id="estate_property_type_apartment" model="estate.property.type">
+            <field name="name">Apartment</field>
+            <field name="sequence">1</field>
+        </record>
 
-          <record id="object1" model="estate.estate">
-            <field name="name">Object 1</field>
-            <field name="value">10</field>
-          </record>
+        <record id="estate_property_type_villa" model="estate.property.type">
+            <field name="name">Villa</field>
+            <field name="sequence">2</field>
+        </record>
 
-          <record id="object2" model="estate.estate">
-            <field name="name">Object 2</field>
-            <field name="value">20</field>
-          </record>
+        <record id="estate_property_tag_city_center" model="estate.property.tag">
+            <field name="name">City Center</field>
+            <field name="color">2</field>
+        </record>
 
-          <record id="object3" model="estate.estate">
-            <field name="name">Object 3</field>
-            <field name="value">30</field>
-          </record>
+        <record id="estate_property_tag_investment" model="estate.property.tag">
+            <field name="name">Investment</field>
+            <field name="color">6</field>
+        </record>
 
-          <record id="object4" model="estate.estate">
-            <field name="name">Object 4</field>
-            <field name="value">40</field>
-          </record>
--->
+        <record id="estate_demo_partner_john" model="res.partner">
+            <field name="name">John Investor</field>
+            <field name="email">john.investor@example.com</field>
+        </record>
+
+        <record id="estate_demo_partner_alice" model="res.partner">
+            <field name="name">Alice Buyer</field>
+            <field name="email">alice.buyer@example.com</field>
+        </record>
+
+        <record id="estate_demo_property_1" model="estate.property">
+            <field name="name">Modern Apartment District 1</field>
+            <field name="expected_price">350000</field>
+            <field name="bedrooms">2</field>
+            <field name="living_area">85</field>
+            <field name="garden_area">10</field>
+            <field name="property_type_id" ref="estate_property_type_apartment" />
+            <field name="tag_ids" eval="[(6, 0, [ref('estate_property_tag_city_center'), ref('estate_property_tag_investment')])]" />
+        </record>
+
+        <record id="estate_demo_property_2" model="estate.property">
+            <field name="name">Luxury Riverside Villa</field>
+            <field name="expected_price">1250000</field>
+            <field name="bedrooms">4</field>
+            <field name="living_area">280</field>
+            <field name="garden_area">160</field>
+            <field name="property_type_id" ref="estate_property_type_villa" />
+            <field name="tag_ids" eval="[(6, 0, [ref('estate_property_tag_investment')])]" />
+        </record>
+
+        <record id="estate_demo_offer_1" model="estate.property.offer">
+            <field name="price">360000</field>
+            <field name="partner_id" ref="estate_demo_partner_john" />
+            <field name="property_id" ref="estate_demo_property_1" />
+        </record>
+
+        <record id="estate_demo_offer_2" model="estate.property.offer">
+            <field name="price">1300000</field>
+            <field name="partner_id" ref="estate_demo_partner_alice" />
+            <field name="property_id" ref="estate_demo_property_2" />
+        </record>
     </data>
 </odoo>

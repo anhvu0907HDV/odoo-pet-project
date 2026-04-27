@@ -3,13 +3,18 @@
         <field name="name">estate.property.tree</field>
         <field name="model">estate.property</field>
         <field name="arch" type="xml">
-            <tree string="Properties">
+            <tree string="Properties"
+                class="o_estate_property_tree"
+                decoration-info="state == 'offer'"
+                decoration-success="state == 'sold'"
+                decoration-muted="state == 'cancel'">
                 <field name="name" />
-                <field name="price" />
-                <field name="best_price" />
-                <field name="bedrooms" />
+                <field name="property_type_id" />
+                <field name="currency_id" invisible="1" />
+                <field name="expected_price" widget="monetary" options="{'currency_field': 'currency_id'}" />
+                <field name="selling_price" widget="monetary" options="{'currency_field': 'currency_id'}" />
+                <field name="best_price" widget="monetary" options="{'currency_field': 'currency_id'}" />
                 <field name="salesperson_id" />
-                <field name="buyer_id" />
                 <field name="state" />
             </tree>
         </field>
@@ -19,32 +24,71 @@
         <field name="name">estate.property.kanban</field>
         <field name="model">estate.property</field>
         <field name="arch" type="xml">
-            <kanban class="o_kanban_mobile">
+            <kanban class="o_kanban_mobile o_estate_property_kanban">
                 <field name="name" />
-                <field name="price" />
+                <field name="property_type_id" />
+                <field name="tag_ids" />
+                <field name="expected_price" />
+                <field name="selling_price" />
                 <field name="best_price" />
                 <field name="bedrooms" />
+                <field name="total_area" />
+                <field name="offer_count" />
+                <field name="salesperson_id" />
+                <field name="active" />
+                <field name="currency_id" />
                 <field name="state" />
 
                 <templates>
                     <t t-name="kanban-box">
-                        <div t-attf-class="oe_kanban_card oe_kanban_global_click">
-                            <strong>
-                                <field name="name" />
-                            </strong>
+                        <div class="oe_kanban_global_click o_estate_property_card"
+                            t-attf-class="o_estate_property_state_#{record.state.raw_value}"
+                            t-att-class="{'o_estate_property_card_archived': !record.active.raw_value}">
+                            <div class="o_estate_property_header">
+                                <strong class="o_estate_property_title">
+                                    <field name="name" />
+                                </strong>
+                                <span t-if="record.state.raw_value == 'new'" class="badge rounded-pill text-bg-primary">New</span>
+                                <span t-if="record.state.raw_value == 'offer'" class="badge rounded-pill text-bg-info">Offer</span>
+                                <span t-if="record.state.raw_value == 'sold'" class="badge rounded-pill text-bg-success">Sold</span>
+                                <span t-if="record.state.raw_value == 'cancel'" class="badge rounded-pill text-bg-danger">Cancelled</span>
+                            </div>
 
-                            <div>
-                                Expected: <field name="price" />
+                            <div class="o_estate_property_subtitle">
+                                <i class="fa fa-building me-1" />
+                                <field name="property_type_id" />
                             </div>
-                            <div>
-                                Best offer: <field name="best_price" />
+
+                            <div class="o_estate_property_prices">
+                                <div class="o_estate_metric">
+                                    <span class="o_estate_metric_label">Expected</span>
+                                    <span class="o_estate_metric_value">
+                                        <field name="expected_price" widget="monetary" options="{'currency_field': 'currency_id'}" />
+                                    </span>
+                                </div>
+                                <div class="o_estate_metric">
+                                    <span class="o_estate_metric_label">Selling</span>
+                                    <span class="o_estate_metric_value">
+                                        <field name="selling_price" widget="monetary" options="{'currency_field': 'currency_id'}" />
+                                    </span>
+                                </div>
                             </div>
-                            <div>
-                                Bedrooms: <field name="bedrooms" />
+
+                            <div class="o_estate_property_meta">
+                                <span><i class="fa fa-bed me-1" /> <field name="bedrooms" /> beds</span>
+                                <span><i class="fa fa-home me-1" /> <field name="total_area" /> m2</span>
                             </div>
-                            <div>
-                                Status: <field name="state" />
+
+                            <div class="o_estate_property_footer">
+                                <span><i class="fa fa-user me-1" /> <field name="salesperson_id" /></span>
+                                <span><i class="fa fa-tag me-1" /> <field name="offer_count" /> offers</span>
                             </div>
+
+                            <div class="o_estate_property_tags">
+                                <field name="tag_ids" widget="many2many_tags" />
+                            </div>
+
+                            <div t-if="!record.active.raw_value" class="o_estate_archived_badge">Archived</div>
                         </div>
                     </t>
                 </templates>
@@ -56,12 +100,13 @@
         <field name="name">estate.property.form</field>
         <field name="model">estate.property</field>
         <field name="arch" type="xml">
-            <form string="Property">
+            <form string="Property" class="o_estate_property_form">
                 <header>
                     <button name="action_mark_sold"
                         type="object"
                         string="Mark as Sold"
                         class="btn-primary"
+                        groups="estate.group_estate_manager"
                         invisible="state in ['sold', 'cancel']" />
 
                     <button name="action_cancel"
@@ -69,6 +114,18 @@
                         string="Cancel"
                         class="btn-secondary"
                         invisible="state in ['sold', 'cancel']" />
+
+                    <button name="action_archive_property"
+                        type="object"
+                        string="Archive"
+                        class="btn-secondary"
+                        invisible="not active" />
+
+                    <button name="action_unarchive_property"
+                        type="object"
+                        string="Unarchive"
+                        class="btn-secondary"
+                        invisible="active" />
 
                     <field name="state" widget="statusbar" statusbar_visible="new,offer,sold,cancel" />
                 </header>
@@ -85,16 +142,20 @@
                     <group>
                         <group>
                             <field name="name" />
-                            <field name="price" />
-                            <field name="bedrooms" />
+                            <field name="property_type_id" />
+                            <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}" />
                             <field name="salesperson_id" />
                             <field name="buyer_id" readonly="1" />
+                            <field name="availability_date" />
                         </group>
                         <group>
+                            <field name="expected_price" widget="monetary" options="{'currency_field': 'currency_id'}" />
+                            <field name="selling_price" readonly="1" widget="monetary" options="{'currency_field': 'currency_id'}" />
+                            <field name="best_price" readonly="1" widget="monetary" options="{'currency_field': 'currency_id'}" />
                             <field name="living_area" />
                             <field name="garden_area" />
                             <field name="total_area" readonly="1" />
-                            <field name="best_price" readonly="1" />
+                            <field name="currency_id" invisible="1" />
                             <field name="company_id" groups="base.group_multi_company" />
                             <field name="active" />
                         </group>
@@ -104,17 +165,22 @@
                     </group>
 
                     <notebook>
-                    <page string="Offers">
-                        <field name="offer_ids" context="{'default_property_id': id}">
-                            <tree editable="bottom" create="1" delete="0">
-                                <field name="price" />
-                                <field name="partner_id" />
-                                <field name="validity" />
-                                <field name="deadline" />
-                                <field name="state" />
-                            </tree>
-                        </field>
-                    </page>
+                        <page string="Offers">
+                            <field name="offer_ids" context="{'default_property_id': id}">
+                                <tree editable="bottom"
+                                    create="1"
+                                    delete="0"
+                                    class="o_estate_offer_inline_tree"
+                                    decoration-success="state == 'accepted'"
+                                    decoration-muted="state == 'refused'">
+                                    <field name="price" />
+                                    <field name="partner_id" />
+                                    <field name="validity" />
+                                    <field name="deadline" />
+                                    <field name="state" />
+                                </tree>
+                            </field>
+                        </page>
                     </notebook>
                 </sheet>
 

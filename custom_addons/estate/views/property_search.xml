@@ -7,18 +7,23 @@
                 <field name="name" />
                 <field name="buyer_id" />
                 <field name="salesperson_id" />
+                <field name="property_type_id" />
+                <field name="tag_ids" />
                 <filter name="new_properties" string="New" domain="[('state', '=', 'new')]" />
                 <filter name="offer_properties" string="Offer Received" domain="[('state', '=', 'offer')]" />
                 <filter name="sold_properties" string="Sold" domain="[('state', '=', 'sold')]" />
                 <filter name="cancel_properties" string="Cancelled" domain="[('state', '=', 'cancel')]" />
                 <separator />
                 <filter name="my_properties" string="My Properties" domain="[('salesperson_id', '=', uid)]" />
+                <filter name="no_offers" string="No Offers" domain="[('offer_ids', '=', False)]" />
+                <filter name="high_value" string="High Value" domain="[('expected_price', '&gt;=', 1000000)]" />
                 <filter name="active_properties" string="Active" domain="[('active', '=', True)]" />
                 <filter name="archived_properties" string="Archived" domain="[('active', '=', False)]" />
                 <group expand="0" string="Group By">
                     <filter name="group_state" string="Status" context="{'group_by': 'state'}" />
                     <filter name="group_buyer" string="Buyer" context="{'group_by': 'buyer_id'}" />
                     <filter name="group_salesperson" string="Salesperson" context="{'group_by': 'salesperson_id'}" />
+                    <filter name="group_type" string="Type" context="{'group_by': 'property_type_id'}" />
                 </group>
             </search>
         </field>

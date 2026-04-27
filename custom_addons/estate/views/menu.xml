@@ -19,4 +19,30 @@
         parent="estate_menu_root"
         action="action_property_offer"
         sequence="20" />
+
+    <menuitem id="estate_menu_reporting"
+        name="Reporting"
+        parent="estate_menu_root"
+        action="action_property_report"
+        sequence="30" />
+
+    <menuitem id="estate_menu_configuration"
+        name="Configuration"
+        parent="estate_menu_root"
+        sequence="90"
+        groups="estate.group_estate_manager" />
+
+    <menuitem id="estate_menu_property_type"
+        name="Property Types"
+        parent="estate_menu_configuration"
+        action="action_property_type"
+        sequence="10"
+        groups="estate.group_estate_manager" />
+
+    <menuitem id="estate_menu_property_tag"
+        name="Property Tags"
+        parent="estate_menu_configuration"
+        action="action_property_tag"
+        sequence="20"
+        groups="estate.group_estate_manager" />
 </odoo>

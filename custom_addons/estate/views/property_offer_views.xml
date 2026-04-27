@@ -3,8 +3,13 @@
     <field name="name">estate.property.offer.tree</field>
     <field name="model">estate.property.offer</field>
     <field name="arch" type="xml">
-      <tree string="Offers">
-        <field name="price" />
+      <tree string="Offers"
+        class="o_estate_offer_tree"
+        decoration-success="state == 'accepted'"
+        decoration-muted="state == 'refused'"
+        decoration-info="state == 'pending'">
+        <field name="currency_id" invisible="1" />
+        <field name="price" widget="monetary" options="{'currency_field': 'currency_id'}" />
         <field name="partner_id" />
         <field name="property_id" />
         <field name="validity" />
@@ -37,12 +42,13 @@
     <field name="name">estate.property.offer.form</field>
     <field name="model">estate.property.offer</field>
     <field name="arch" type="xml">
-      <form string="Offer">
+      <form string="Offer" class="o_estate_offer_form">
         <header>
           <button name="action_accept"
             type="object"
             string="Accept"
             class="btn-success"
+            groups="estate.group_estate_manager"
             invisible="state != 'pending'" />
 
           <button name="action_refuse"
@@ -51,14 +57,21 @@
             class="btn-danger"
             invisible="state != 'pending'" />
 
+          <button name="action_set_pending"
+            type="object"
+            string="Set to Pending"
+            class="btn-secondary"
+            invisible="state != 'refused'" />
+
           <field name="state" widget="statusbar" statusbar_visible="pending,accepted,refused" />
         </header>
 
         <sheet>
           <group>
-            <field name="price" />
+            <field name="price" widget="monetary" options="{'currency_field': 'currency_id'}" />
             <field name="partner_id" />
             <field name="property_id" />
+            <field name="currency_id" invisible="1" />
             <field name="validity" />
             <field name="deadline" />
           </group>
