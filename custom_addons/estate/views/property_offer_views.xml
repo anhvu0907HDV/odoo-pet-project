@@ -1,5 +1,38 @@
 <odoo>
-  <!-- FORM VIEW -->
+  <record id="view_property_offer_tree" model="ir.ui.view">
+    <field name="name">estate.property.offer.tree</field>
+    <field name="model">estate.property.offer</field>
+    <field name="arch" type="xml">
+      <tree string="Offers">
+        <field name="price" />
+        <field name="partner_id" />
+        <field name="property_id" />
+        <field name="validity" />
+        <field name="deadline" />
+        <field name="state" />
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_property_offer_search" model="ir.ui.view">
+    <field name="name">estate.property.offer.search</field>
+    <field name="model">estate.property.offer</field>
+    <field name="arch" type="xml">
+      <search string="Search Offers">
+        <field name="property_id" />
+        <field name="partner_id" />
+        <filter name="pending_offers" string="Pending" domain="[('state', '=', 'pending')]" />
+        <filter name="accepted_offers" string="Accepted" domain="[('state', '=', 'accepted')]" />
+        <separator />
+        <group expand="0" string="Group By">
+          <filter name="group_state" string="Status" context="{'group_by': 'state'}" />
+          <filter name="group_property" string="Property" context="{'group_by': 'property_id'}" />
+          <filter name="group_partner" string="Customer" context="{'group_by': 'partner_id'}" />
+        </group>
+      </search>
+    </field>
+  </record>
+
   <record id="view_property_offer_form" model="ir.ui.view">
     <field name="name">estate.property.offer.form</field>
     <field name="model">estate.property.offer</field>
@@ -9,14 +42,16 @@
           <button name="action_accept"
             type="object"
             string="Accept"
-            class="btn-success" />
+            class="btn-success"
+            invisible="state != 'pending'" />
 
           <button name="action_refuse"
             type="object"
             string="Refuse"
-            class="btn-danger" />
+            class="btn-danger"
+            invisible="state != 'pending'" />
 
-          <field name="state" widget="statusbar" />
+          <field name="state" widget="statusbar" statusbar_visible="pending,accepted,refused" />
         </header>
 
         <sheet>
@@ -24,9 +59,18 @@
             <field name="price" />
             <field name="partner_id" />
             <field name="property_id" />
+            <field name="validity" />
+            <field name="deadline" />
           </group>
         </sheet>
       </form>
     </field>
+  </record>
+
+  <record id="action_property_offer" model="ir.actions.act_window">
+    <field name="name">Offers</field>
+    <field name="res_model">estate.property.offer</field>
+    <field name="view_mode">tree,form</field>
+    <field name="search_view_id" ref="view_property_offer_search" />
   </record>
 </odoo>

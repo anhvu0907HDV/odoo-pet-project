@@ -1,0 +1,26 @@
+<odoo>
+    <record id="view_property_search" model="ir.ui.view">
+        <field name="name">estate.property.search</field>
+        <field name="model">estate.property</field>
+        <field name="arch" type="xml">
+            <search string="Search Properties">
+                <field name="name" />
+                <field name="buyer_id" />
+                <field name="salesperson_id" />
+                <filter name="new_properties" string="New" domain="[('state', '=', 'new')]" />
+                <filter name="offer_properties" string="Offer Received" domain="[('state', '=', 'offer')]" />
+                <filter name="sold_properties" string="Sold" domain="[('state', '=', 'sold')]" />
+                <filter name="cancel_properties" string="Cancelled" domain="[('state', '=', 'cancel')]" />
+                <separator />
+                <filter name="my_properties" string="My Properties" domain="[('salesperson_id', '=', uid)]" />
+                <filter name="active_properties" string="Active" domain="[('active', '=', True)]" />
+                <filter name="archived_properties" string="Archived" domain="[('active', '=', False)]" />
+                <group expand="0" string="Group By">
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}" />
+                    <filter name="group_buyer" string="Buyer" context="{'group_by': 'buyer_id'}" />
+                    <filter name="group_salesperson" string="Salesperson" context="{'group_by': 'salesperson_id'}" />
+                </group>
+            </search>
+        </field>
+    </record>
+</odoo>

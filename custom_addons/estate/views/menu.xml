@@ -1,14 +1,22 @@
 <odoo>
-    <menuitem id="estate_menu_root" name="Real Estate" />
+    <menuitem id="estate_menu_root" name="Real Estate" sequence="10" groups="estate.group_estate_user,estate.group_estate_manager" />
 
     <record id="action_property" model="ir.actions.act_window">
         <field name="name">Properties</field>
         <field name="res_model">estate.property</field>
         <field name="view_mode">kanban,tree,form</field>
+        <field name="search_view_id" ref="view_property_search" />
     </record>
 
     <menuitem id="estate_menu_properties"
         name="Properties"
         parent="estate_menu_root"
-        action="action_property" />
+        action="action_property"
+        sequence="10" />
+
+    <menuitem id="estate_menu_offers"
+        name="Offers"
+        parent="estate_menu_root"
+        action="action_property_offer"
+        sequence="20" />
 </odoo>
