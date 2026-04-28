@@ -1,10 +1,11 @@
 import json
 import logging
 import re
-from urllib import error, request
 
 from odoo import models
 from odoo.exceptions import UserError
+
+from .ai_providers import GeminiProvider, OpenRouterProvider
 
 _logger = logging.getLogger(__name__)
 
@@ -12,6 +13,7 @@ _logger = logging.getLogger(__name__)
 class EstateAiService(models.AbstractModel):
     _name = 'estate.ai.service'
     _description = 'Estate AI Service'
+    _SUPPORTED_PROVIDERS = ('openrouter', 'gemini')
 
     def recommend_offer(self, property_record):
         property_record.ensure_one()
@@ -22,21 +24,18 @@ class EstateAiService(models.AbstractModel):
         prompt = self._build_prompt(property_record, offers)
         provider = self._get_provider()
         try:
-            if provider == 'openrouter':
-                response_text = self._call_openrouter(prompt)
-            else:
-                response_text = self._call_gemini(prompt)
-        except Exception as error_message:
-            _logger.warning('Estate AI fallback triggered for property %s: %s', property_record.id, error_message)
-            return self._fallback_recommendation(property_record, offers, str(error_message), provider)
+            response_text = self._call_provider(provider, prompt)
+        except Exception as exception:
+            _logger.warning('Estate AI fallback triggered for property %s: %s', property_record.id, exception)
+            return self._fallback_recommendation(offers, str(exception), provider)
 
         parsed = self._parse_response_json(response_text)
         if not parsed:
-            return self._fallback_recommendation(property_record, offers, 'AI response format was invalid.', provider)
+            return self._fallback_recommendation(offers, 'AI response format was invalid.', provider)
 
         recommended_offer = offers.filtered(lambda offer: offer.id == parsed.get('offer_id'))[:1]
         if not recommended_offer:
-            return self._fallback_recommendation(property_record, offers, 'AI selected an unknown offer.', provider)
+            return self._fallback_recommendation(offers, 'AI selected an unknown offer.', provider)
 
         return {
             'offer': recommended_offer,
@@ -45,9 +44,19 @@ class EstateAiService(models.AbstractModel):
             'provider': provider,
         }
 
+    def _call_provider(self, provider, prompt):
+        handlers = {
+            'openrouter': self._call_openrouter,
+            'gemini': self._call_gemini,
+        }
+        return handlers[provider](prompt)
+
     def _get_provider(self):
-        provider = self.env['ir.config_parameter'].sudo().get_param('estate.ai_provider') or 'openrouter'
-        return provider if provider in ('openrouter', 'gemini') else 'openrouter'
+        provider = self._get_config('estate.ai_provider', 'openrouter')
+        return provider if provider in self._SUPPORTED_PROVIDERS else 'openrouter'
+
+    def _get_config(self, key, default=None):
+        return self.env['ir.config_parameter'].sudo().get_param(key) or default
 
     def _build_prompt(self, property_record, offers):
         offer_lines = []
@@ -81,84 +90,10 @@ Offers:
 """.strip()
 
     def _call_openrouter(self, prompt):
-        api_key = self.env['ir.config_parameter'].sudo().get_param('estate.openrouter_api_key')
-        if not api_key:
-            raise RuntimeError('OpenRouter API key is missing.')
-        model = self.env['ir.config_parameter'].sudo().get_param('estate.openrouter_model') or 'openrouter/free'
-        payload = {
-            'model': model,
-            'messages': [{'role': 'user', 'content': prompt}],
-            'temperature': 0.1,
-            'response_format': {'type': 'json_object'},
-        }
-        req = request.Request(
-            'https://openrouter.ai/api/v1/chat/completions',
-            data=json.dumps(payload).encode('utf-8'),
-            headers={
-                'Content-Type': 'application/json',
-                'Authorization': f'Bearer {api_key}',
-            },
-            method='POST',
-        )
-        try:
-            with request.urlopen(req, timeout=25) as response:
-                body = json.loads(response.read().decode('utf-8'))
-                return body.get('choices', [{}])[0].get('message', {}).get('content', '')
-        except error.HTTPError as http_error:
-            raw_body = http_error.read().decode('utf-8', errors='ignore')
-            if http_error.code == 429:
-                raise RuntimeError('OpenRouter quota/rate limit exceeded (HTTP 429).') from http_error
-            if http_error.code in (401, 403):
-                raise RuntimeError('OpenRouter API key is invalid or unauthorized.') from http_error
-            raise RuntimeError(f'OpenRouter request failed ({http_error.code}): {raw_body[:180]}') from http_error
+        return OpenRouterProvider(self._get_config).generate(prompt)
 
     def _call_gemini(self, prompt):
-        api_key = (
-            self.env['ir.config_parameter'].sudo().get_param('estate.gemini_api_key')
-            or self.env['ir.config_parameter'].sudo().get_param('gemini_api_key')
-        )
-        if not api_key:
-            raise RuntimeError('Gemini API key is missing.')
-        model_name = self.env['ir.config_parameter'].sudo().get_param('estate.gemini_model') or 'gemini-2.0-flash'
-        endpoints = [
-            f'https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent',
-            f'https://generativelanguage.googleapis.com/v1/models/{model_name}:generateContent',
-        ]
-        payload = {
-            'contents': [{'parts': [{'text': prompt}]}],
-            'generationConfig': {'temperature': 0.1},
-        }
-        http_codes = []
-        details = []
-        for endpoint in endpoints:
-            req = request.Request(
-                f'{endpoint}?key={api_key}',
-                data=json.dumps(payload).encode('utf-8'),
-                headers={'Content-Type': 'application/json'},
-                method='POST',
-            )
-            try:
-                with request.urlopen(req, timeout=20) as response:
-                    body = json.loads(response.read().decode('utf-8'))
-                    return (
-                        body.get('candidates', [{}])[0]
-                        .get('content', {})
-                        .get('parts', [{}])[0]
-                        .get('text', '')
-                    )
-            except error.HTTPError as http_error:
-                raw_body = http_error.read().decode('utf-8', errors='ignore')
-                http_codes.append(http_error.code)
-                details.append(f'{endpoint} -> {http_error.code} {raw_body[:140]}')
-            except Exception as exception:
-                details.append(f'{endpoint} -> {exception}')
-        if 429 in http_codes:
-            raise RuntimeError('Gemini quota exceeded (HTTP 429).')
-        if 401 in http_codes or 403 in http_codes:
-            raise RuntimeError('Gemini API key is invalid or unauthorized.')
-        if 404 in http_codes:
-            raise RuntimeError('Gemini model not found. Check Gemini Model setting.')
-        raise RuntimeError(f'Gemini request failed. {" | ".join(details)}')
+        return GeminiProvider(self._get_config).generate(prompt)
 
     def _parse_response_json(self, response_text):
         if not response_text:
@@ -205,7 +140,7 @@ Offers:
         except Exception:
             return 0.0
 
-    def _fallback_recommendation(self, property_record, offers, reason, provider):
+    def _fallback_recommendation(self, offers, reason, provider):
         best_offer = offers.sorted(key=lambda offer: offer.price, reverse=True)[:1]
         return {
             'offer': best_offer,

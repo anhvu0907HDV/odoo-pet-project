@@ -65,6 +65,8 @@ class EstatePropertyOffer(models.Model):
         for record in self:
             if not record.property_id:
                 continue
+            if record.state == 'refused':
+                continue
             if record.property_id.state in ('cancel', 'sold'):
                 raise ValidationError("You cannot create or update offers for sold/cancelled properties.")
 
