@@ -8,6 +8,7 @@
         decoration-success="state == 'accepted'"
         decoration-muted="state == 'refused'"
         decoration-info="state == 'pending'">
+        <field name="company_id" invisible="1" />
         <field name="currency_id" invisible="1" />
         <field name="price" widget="monetary" options="{'currency_field': 'currency_id'}" />
         <field name="partner_id" />
@@ -47,20 +48,20 @@
           <button name="action_accept"
             type="object"
             string="Accept"
-            class="btn-success"
+            class="btn-success o_estate_btn o_estate_btn_accept"
             groups="estate.group_estate_manager"
             invisible="state != 'pending'" />
 
           <button name="action_refuse"
             type="object"
             string="Refuse"
-            class="btn-danger"
+            class="btn-danger o_estate_btn o_estate_btn_refuse"
             invisible="state != 'pending'" />
 
           <button name="action_set_pending"
             type="object"
             string="Set to Pending"
-            class="btn-secondary"
+            class="btn-secondary o_estate_btn o_estate_btn_pending"
             invisible="state != 'refused'" />
 
           <field name="state" widget="statusbar" statusbar_visible="pending,accepted,refused" />
@@ -68,6 +69,7 @@
 
         <sheet>
           <group>
+            <field name="company_id" invisible="1" />
             <field name="price" widget="monetary" options="{'currency_field': 'currency_id'}" />
             <field name="partner_id" />
             <field name="property_id" />

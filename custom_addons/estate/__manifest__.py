@@ -28,6 +28,7 @@ Interview-ready real estate pet project:
         'views/property_search.xml',
         'views/property_offer_views.xml',
         'views/property_report_views.xml',
+        'views/res_config_settings_views.xml',
         'views/menu.xml',
     ],
     'demo': [

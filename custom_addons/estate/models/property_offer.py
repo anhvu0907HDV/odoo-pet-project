@@ -9,10 +9,12 @@ class EstatePropertyOffer(models.Model):
     _description = 'Property Offer'
     _inherit = ['estate.notification.mixin']
     _order = 'price desc'
+    _check_company_auto = True
 
     price = fields.Float(required=True)
-    partner_id = fields.Many2one('res.partner', required=True)
-    property_id = fields.Many2one('estate.property', required=True, ondelete='cascade')
+    partner_id = fields.Many2one('res.partner', required=True, check_company=True)
+    property_id = fields.Many2one('estate.property', required=True, ondelete='cascade', check_company=True)
+    company_id = fields.Many2one('res.company', related='property_id.company_id', store=True, readonly=True)
     currency_id = fields.Many2one('res.currency', related='property_id.currency_id', readonly=True)
     validity = fields.Integer(default=7)
     deadline = fields.Date(compute='_compute_deadline', inverse='_inverse_deadline', store=True)
@@ -67,7 +69,7 @@ class EstatePropertyOffer(models.Model):
                 raise ValidationError("You cannot create or update offers for sold/cancelled properties.")
 
             other_offers = record.property_id.offer_ids.filtered(
-                lambda o: o.id != record.id
+                lambda offer_record: offer_record.id != record.id and offer_record.state in ('pending', 'accepted')
             )
 
             if other_offers:

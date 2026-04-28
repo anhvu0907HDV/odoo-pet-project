@@ -50,6 +50,11 @@ class EstateProperty(models.Model):
     offer_ids = fields.One2many('estate.property.offer', 'property_id', string='Offers')
     best_price = fields.Float(compute='_compute_best_price', store=True, string='Best Offer')
     offer_count = fields.Integer(compute='_compute_offer_count')
+    ai_recommended_offer_id = fields.Many2one('estate.property.offer', string='AI Recommended Offer', copy=False)
+    ai_recommendation_confidence = fields.Float(string='AI Confidence', digits=(16, 2), copy=False)
+    ai_recommendation_text = fields.Text(string='AI Recommendation Note', copy=False)
+    ai_provider = fields.Char(string='AI Provider', copy=False)
+    ai_last_analysis_at = fields.Datetime(string='AI Last Analysis', copy=False)
 
     _sql_constraints = [
         ('estate_property_expected_price_positive', 'CHECK(expected_price > 0)', 'Expected price must be greater than 0.'),
@@ -66,7 +71,12 @@ class EstateProperty(models.Model):
     def action_cancel(self):
         self.ensure_one()
         self._check_can_be_cancelled()
-        self.write({'state': 'cancel', 'sold_date': False})
+        self.write({
+            'state': 'cancel',
+            'sold_date': False,
+            'buyer_id': False,
+            'selling_price': 0,
+        })
         return self._notify_action('Property has been cancelled.', 'warning')
 
     def action_archive_property(self):
@@ -93,6 +103,23 @@ class EstateProperty(models.Model):
             'domain': [('property_id', '=', self.id)],
             'context': {'default_property_id': self.id},
         }
+
+    def action_ai_recommend_offer(self):
+        self.ensure_one()
+        recommendation = self.env['estate.ai.service'].recommend_offer(self)
+        offer = recommendation['offer']
+        self.write({
+            'ai_recommended_offer_id': offer.id,
+            'ai_recommendation_confidence': recommendation.get('confidence', 0),
+            'ai_recommendation_text': recommendation.get('reasoning'),
+            'ai_provider': recommendation.get('provider'),
+            'ai_last_analysis_at': fields.Datetime.now(),
+        })
+        message = (
+            f"AI recommends offer #{offer.id} ({offer.partner_id.display_name}) "
+            f"at {offer.price}. Confidence: {self.ai_recommendation_confidence}%."
+        )
+        return self._notify_action(message, 'info')
 
     @api.depends('living_area', 'garden_area')
     def _compute_total_area(self):

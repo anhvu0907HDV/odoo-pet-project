@@ -111,6 +111,59 @@
 
 .o_form_view.o_estate_property_form,
 .o_form_view.o_estate_offer_form {
+    .o_estate_btn {
+        border-radius: 10px;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        transition: all 0.15s ease;
+    }
+
+    .o_estate_btn:hover {
+        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.12);
+        transform: translateY(-1px);
+    }
+
+    .o_estate_btn_ai_main {
+        background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+        border-color: #2563eb;
+    }
+
+    .o_estate_btn_sold {
+        background: #16a34a;
+        border-color: #16a34a;
+    }
+
+    .o_estate_btn_cancel {
+        background: #475569;
+        border-color: #475569;
+        color: #fff;
+    }
+
+    .o_estate_btn_archive,
+    .o_estate_btn_unarchive,
+    .o_estate_btn_pending,
+    .o_estate_btn_stat {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+        color: #1e293b;
+    }
+
+    .o_estate_btn_accept {
+        background: #16a34a;
+        border-color: #16a34a;
+    }
+
+    .o_estate_btn_refuse {
+        background: #dc2626;
+        border-color: #dc2626;
+    }
+
+    .o_estate_btn_ai {
+        background: #e0e7ff;
+        border-color: #a5b4fc;
+        color: #3730a3;
+    }
+
     .o_form_sheet {
         border-radius: 14px;
         box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
@@ -145,6 +198,69 @@
     .o_field_widget[name="description"] textarea {
         border-radius: 10px;
         min-height: 110px;
+    }
+
+    .o_estate_ai_panel {
+        background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%);
+        border: 1px solid #dbeafe;
+        border-radius: 12px;
+        margin: 6px 0 14px;
+        padding: 14px;
+    }
+
+    .o_estate_ai_panel_header {
+        align-items: flex-start;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+    }
+
+    .o_estate_ai_title_block h3 {
+        color: #0f172a;
+        font-size: 16px;
+        margin: 0;
+    }
+
+    .o_estate_ai_title_block .text-muted {
+        display: inline-block;
+        font-size: 12px;
+        margin-top: 2px;
+    }
+
+    .o_estate_ai_metrics {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin-bottom: 12px;
+    }
+
+    .o_estate_ai_metric {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px;
+    }
+
+    .o_estate_ai_metric_label {
+        color: #475569;
+        display: block;
+        font-size: 11px;
+        font-weight: 600;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+    }
+
+    .o_estate_ai_reasoning {
+        background: #ffffff;
+        border: 1px dashed #bfdbfe;
+        border-radius: 10px;
+        padding: 10px;
+    }
+
+    .o_estate_ai_reasoning .o_field_text textarea {
+        background: #f8fafc;
+        border-radius: 8px;
+        min-height: 88px;
     }
 }
 

@@ -105,27 +105,33 @@
                     <button name="action_mark_sold"
                         type="object"
                         string="Mark as Sold"
-                        class="btn-primary"
+                        class="btn-primary o_estate_btn o_estate_btn_sold"
                         groups="estate.group_estate_manager"
                         invisible="state in ['sold', 'cancel']" />
 
                     <button name="action_cancel"
                         type="object"
                         string="Cancel"
-                        class="btn-secondary"
+                        class="btn-secondary o_estate_btn o_estate_btn_cancel"
                         invisible="state in ['sold', 'cancel']" />
 
                     <button name="action_archive_property"
                         type="object"
                         string="Archive"
-                        class="btn-secondary"
+                        class="btn-secondary o_estate_btn o_estate_btn_archive"
                         invisible="not active" />
 
                     <button name="action_unarchive_property"
                         type="object"
                         string="Unarchive"
-                        class="btn-secondary"
+                        class="btn-secondary o_estate_btn o_estate_btn_unarchive"
                         invisible="active" />
+
+                    <button name="action_ai_recommend_offer"
+                        type="object"
+                        string="AI Recommend Offer"
+                        class="btn-secondary o_estate_btn o_estate_btn_ai"
+                        invisible="offer_count == 0" />
 
                     <field name="state" widget="statusbar" statusbar_visible="new,offer,sold,cancel" />
                 </header>
@@ -134,7 +140,7 @@
                     <div class="oe_button_box" name="button_box">
                         <button type="object"
                             name="action_view_offers"
-                            class="oe_stat_button">
+                            class="oe_stat_button o_estate_btn o_estate_btn_stat">
                             <field name="offer_count" widget="statinfo" string="Offers" />
                         </button>
                     </div>
@@ -164,6 +170,43 @@
                         <field name="description" />
                     </group>
 
+                    <separator string="AI Insights" />
+                    <div class="o_estate_ai_panel">
+                        <div class="o_estate_ai_panel_header">
+                            <div class="o_estate_ai_title_block">
+                                <h3>Offer Intelligence</h3>
+                                <span class="text-muted">AI recommendation snapshot for this property</span>
+                            </div>
+                            <button name="action_ai_recommend_offer"
+                                type="object"
+                                string="Run AI Analysis"
+                                class="btn btn-primary o_estate_btn o_estate_btn_ai_main"
+                                invisible="offer_count == 0" />
+                        </div>
+                        <div class="o_estate_ai_metrics">
+                            <div class="o_estate_ai_metric">
+                                <span class="o_estate_ai_metric_label">Recommended Offer</span>
+                                <field name="ai_recommended_offer_id" readonly="1" nolabel="1" />
+                            </div>
+                            <div class="o_estate_ai_metric">
+                                <span class="o_estate_ai_metric_label">Confidence</span>
+                                <field name="ai_recommendation_confidence" readonly="1" nolabel="1" widget="percentage" />
+                            </div>
+                            <div class="o_estate_ai_metric">
+                                <span class="o_estate_ai_metric_label">Provider</span>
+                                <field name="ai_provider" readonly="1" nolabel="1" />
+                            </div>
+                            <div class="o_estate_ai_metric">
+                                <span class="o_estate_ai_metric_label">Last Analysis</span>
+                                <field name="ai_last_analysis_at" readonly="1" nolabel="1" />
+                            </div>
+                        </div>
+                        <div class="o_estate_ai_reasoning">
+                            <label for="ai_recommendation_text" class="o_estate_ai_metric_label">Recommendation Note</label>
+                            <field name="ai_recommendation_text" readonly="1" nolabel="1" placeholder="No recommendation yet. Run AI analysis after receiving offers." />
+                        </div>
+                    </div>
+
                     <notebook>
                         <page string="Offers">
                             <field name="offer_ids" context="{'default_property_id': id}">
@@ -173,6 +216,7 @@
                                     class="o_estate_offer_inline_tree"
                                     decoration-success="state == 'accepted'"
                                     decoration-muted="state == 'refused'">
+                                    <field name="company_id" invisible="1" />
                                     <field name="price" />
                                     <field name="partner_id" />
                                     <field name="validity" />

@@ -1,0 +1,30 @@
+<odoo>
+    <record id="res_config_settings_view_form_estate_ai" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.estate.ai</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Real Estate" string="Real Estate" name="estate">
+                    <block title="AI Recommendation">
+                        <setting string="AI Provider" help="Provider used for offer recommendation.">
+                            <field name="estate_ai_provider" />
+                        </setting>
+                        <setting string="OpenRouter Model" help="Model id for OpenRouter chat completions endpoint." invisible="estate_ai_provider != 'openrouter'">
+                            <field name="estate_openrouter_model" placeholder="openrouter/free" />
+                        </setting>
+                        <setting string="OpenRouter API Key" help="API key for OpenRouter offer recommendation." invisible="estate_ai_provider != 'openrouter'">
+                            <field name="estate_openrouter_api_key" password="True" placeholder="sk-or-..." />
+                        </setting>
+                        <setting string="Gemini Model" help="Model id for Gemini generateContent endpoint." invisible="estate_ai_provider != 'gemini'">
+                            <field name="estate_gemini_model" placeholder="gemini-2.0-flash" />
+                        </setting>
+                        <setting string="Gemini API Key" help="API key for Gemini offer recommendation." invisible="estate_ai_provider != 'gemini'">
+                            <field name="estate_gemini_api_key" password="True" placeholder="AIza..." />
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>
