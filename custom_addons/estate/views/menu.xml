@@ -26,6 +26,12 @@
         action="action_property_report"
         sequence="30" />
 
+    <menuitem id="estate_menu_report_export"
+        name="Export Reports"
+        parent="estate_menu_root"
+        action="action_estate_report_wizard"
+        sequence="35" />
+
     <menuitem id="estate_menu_configuration"
         name="Configuration"
         parent="estate_menu_root"

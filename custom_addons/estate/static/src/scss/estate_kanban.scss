@@ -277,3 +277,19 @@
         background: #f8fafc;
     }
 }
+
+.o_form_view.o_estate_report_wizard_form {
+    .o_estate_report_intro {
+        background: linear-gradient(135deg, #eef2ff 0%, #f8fafc 100%);
+        border: 1px solid #c7d2fe;
+        border-radius: 12px;
+        margin-bottom: 12px;
+        padding: 12px 14px;
+    }
+
+    .o_estate_report_intro h2 {
+        color: #1e1b4b;
+        font-size: 20px;
+        margin: 0;
+    }
+}

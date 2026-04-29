@@ -1,7 +1,10 @@
+import logging
 from datetime import timedelta
 
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
+
+_logger = logging.getLogger(__name__)
 
 
 class EstatePropertyOffer(models.Model):
@@ -92,13 +95,15 @@ class EstatePropertyOffer(models.Model):
 
     def action_accept(self):
         self.ensure_one()
+        _logger.info(f'=== DEBUG: action_accept called for offer {self.id} ===')
         self._check_manager_permission('accept offers')
         if self.property_id.state in ('cancel', 'sold'):
             raise UserError("You cannot accept offers for sold/cancelled properties.")
 
-        self.property_id.offer_ids.filtered(
+        refused_offers = self.property_id.offer_ids.filtered(
             lambda offer: offer.id != self.id and offer.state != 'refused'
-        ).write({'state': 'refused'})
+        )
+        refused_offers.write({'state': 'refused'})
 
         self.write({'state': 'accepted'})
 
@@ -107,18 +112,25 @@ class EstatePropertyOffer(models.Model):
             'selling_price': self.price,
             'state': 'offer',
         })
+        _logger.info(f'=== DEBUG: About to send email for accepted offer ===')
+        self._send_offer_email('estate.email_template_offer_accepted')
+        _logger.info(f'=== DEBUG: About to send email for refused offers ===')
+        refused_offers._send_offer_email('estate.email_template_offer_refused')
         return self._notify_action("Offer accepted successfully.", "success")
 
     def action_refuse(self):
         self.ensure_one()
+        self._check_manager_permission('refuse offers')
         if self.state == 'accepted':
             raise UserError("Cannot refuse an accepted offer. Accept another offer instead.")
         self.write({'state': 'refused'})
         self._sync_property_state_after_refuse()
+        self._send_offer_email('estate.email_template_offer_refused')
         return self._notify_action("Offer has been refused.", "warning")
 
     def action_set_pending(self):
         self.ensure_one()
+        self._check_manager_permission('set offers to pending')
         if self.state == 'pending':
             return self._notify_action("Offer is already pending.", "info")
         if self.state == 'accepted':
@@ -137,3 +149,122 @@ class EstatePropertyOffer(models.Model):
     def _check_manager_permission(self, action_label):
         if not self.env.user.has_group('estate.group_estate_manager'):
             raise UserError(f'Only Estate Manager can {action_label}.')
+
+    def _send_offer_email(self, template_xmlid):
+        _logger.info(f'=== DEBUG: _send_offer_email called with template: {template_xmlid} ===')
+        template = self.env.ref(template_xmlid, raise_if_not_found=False)
+        _logger.info(f'Template found: {template}')
+        if not template:
+            _logger.warning(f'Mail template not found: {template_xmlid}')
+            return
+        
+        # Filter offers with valid email
+        offers_with_email = self.filtered(lambda offer_record: offer_record.partner_id.email)
+        _logger.info(f'Offers with email: {len(offers_with_email)}')
+        
+        for offer in offers_with_email:
+            partner_email = offer.partner_id.email
+            _logger.info(f'Sending email to {offer.partner_id.name} ({partner_email}) for offer {offer.id}')
+            
+            try:
+                # Manually render template with offer data
+                property_name = offer.property_id.name or 'Unknown Property'
+                partner_name = offer.partner_id.name or 'Customer'
+                price = offer.price
+                currency = offer.currency_id.name if offer.currency_id else 'USD'
+                
+                if 'accepted' in template_xmlid:
+                    subject = f'Your offer for {property_name} was accepted'
+                    body = f'''
+<div>
+    <p>Hello {partner_name},</p>
+    <p>Your offer for <strong>{property_name}</strong> has been accepted.</p>
+    <ul>
+        <li>Offer price: {price:,.0f} {currency}</li>
+        <li>Property: {property_name}</li>
+    </ul>
+    <p>Our team will contact you for next steps.</p>
+</div>
+'''
+                elif 'refused' in template_xmlid:
+                    subject = f'Update on your offer for {property_name}'
+                    body = f'''
+<div>
+    <p>Hello {partner_name},</p>
+    <p>Thank you for your interest in <strong>{property_name}</strong>.</p>
+    <p>We regret to inform you that your current offer was not selected.</p>
+    <p>If still interested, you can contact our team and submit a new offer.</p>
+</div>
+'''
+                else:
+                    subject = f'Reminder: your offer for {property_name} expires soon'
+                    deadline = offer.deadline or 'N/A'
+                    body = f'''
+<div>
+    <p>Hello {partner_name},</p>
+    <p>Your offer for <strong>{property_name}</strong> is still pending and will expire on <strong>{deadline}</strong>.</p>
+    <p>If you need to update your offer, please contact our team before the deadline.</p>
+</div>
+'''
+                
+                _logger.info(f'Rendered - Subject: {subject}')
+                
+                # Create and send mail
+                mail = self.env['mail.mail'].sudo().create({
+                    'subject': subject,
+                    'email_from': 'estate@localhost',
+                    'email_to': partner_email,
+                    'body_html': body,
+                    'model': 'estate.property.offer',
+                    'res_id': offer.id,
+                })
+                mail.send()
+                _logger.info(f'Mail sent successfully for offer {offer.id}')
+            except Exception as e:
+                _logger.error(f'Error sending email for offer {offer.id}: {e}')
+                import traceback
+                _logger.error(traceback.format_exc())
+
+    @api.model
+    def _cron_notify_expiring_offers(self):
+        today = fields.Date.context_today(self)
+        threshold_date = today + timedelta(days=2)
+        expiring_offers = self.search([
+            ('state', '=', 'pending'),
+            ('deadline', '>=', today),
+            ('deadline', '<=', threshold_date),
+        ])
+
+        activity_type = self.env.ref('mail.mail_activity_data_todo', raise_if_not_found=False)
+        if not activity_type:
+            return
+
+        for offer in expiring_offers:
+            property_record = offer.property_id
+            salesperson = property_record.salesperson_id
+            if not salesperson:
+                continue
+
+            note = (
+                f'Offer #{offer.id} from {offer.partner_id.display_name} '
+                f'for "{property_record.name}" is expiring on {offer.deadline}.'
+            )
+            duplicate = self.env['mail.activity'].search_count([
+                ('res_model', '=', 'estate.property'),
+                ('res_id', '=', property_record.id),
+                ('activity_type_id', '=', activity_type.id),
+                ('user_id', '=', salesperson.id),
+                ('summary', '=', 'Follow up expiring offer'),
+                ('date_deadline', '=', today),
+            ])
+            if duplicate:
+                continue
+
+            property_record.activity_schedule(
+                activity_type_id=activity_type.id,
+                user_id=salesperson.id,
+                date_deadline=today,
+                summary='Follow up expiring offer',
+                note=note,
+            )
+            offer._send_offer_email('estate.email_template_offer_expiring')

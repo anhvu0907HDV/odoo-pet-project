@@ -1,0 +1,52 @@
+<odoo>
+    <record id="email_template_offer_accepted" model="mail.template">
+        <field name="name">Estate Offer Accepted</field>
+        <field name="model">estate.property.offer</field>
+        <field name="subject">Your offer for ${object.property_id.name} was accepted</field>
+        <field name="email_from">estate@localhost</field>
+        <field name="email_to">${object.partner_id.email}</field>
+        <field name="body_html" type="html">
+            <div>
+                <p>Hello ${object.partner_id.name or 'Customer'},</p>
+                <p>Your offer for <strong>${object.property_id.name}</strong> has been accepted.</p>
+                <ul>
+                    <li>Offer price: ${format_amount(object.price, object.currency_id)}</li>
+                    <li>Property: ${object.property_id.name}</li>
+                </ul>
+                <p>Our team will contact you for next steps.</p>
+            </div>
+        </field>
+    </record>
+
+    <record id="email_template_offer_refused" model="mail.template">
+        <field name="name">Estate Offer Refused</field>
+        <field name="model">estate.property.offer</field>
+        <field name="subject">Update on your offer for ${object.property_id.name}</field>
+        <field name="email_from">estate@localhost</field>
+        <field name="email_to">${object.partner_id.email}</field>
+        <field name="body_html" type="html">
+            <div>
+                <p>Hello ${object.partner_id.name or 'Customer'},</p>
+                <p>Thank you for your interest in <strong>${object.property_id.name}</strong>.</p>
+                <p>We regret to inform you that your current offer was not selected.</p>
+                <p>If still interested, you can contact our team and submit a new offer.</p>
+            </div>
+        </field>
+    </record>
+
+    <record id="email_template_offer_expiring" model="mail.template">
+        <field name="name">Estate Offer Expiring Soon</field>
+        <field name="model">estate.property.offer</field>
+        <field name="subject">Reminder: your offer for ${object.property_id.name} expires soon</field>
+        <field name="email_from">estate@localhost</field>
+        <field name="email_to">${object.partner_id.email}</field>
+        <field name="body_html" type="html">
+            <div>
+                <p>Hello ${object.partner_id.name or 'Customer'},</p>
+                <p>Your offer for <strong>${object.property_id.name}</strong> is still pending and
+                    will expire on <strong>${object.deadline}</strong>.</p>
+                <p>If you need to update your offer, please contact our team before the deadline.</p>
+            </div>
+        </field>
+    </record>
+</odoo>

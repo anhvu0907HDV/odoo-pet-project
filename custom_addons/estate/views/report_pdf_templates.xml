@@ -1,0 +1,63 @@
+<odoo>
+    <record id="action_report_property_pdf" model="ir.actions.report">
+        <field name="name">Estate Property Report (PDF)</field>
+        <field name="model">estate.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">estate.report_property_pdf</field>
+        <field name="report_file">estate.report_property_pdf</field>
+        <field name="print_report_name">'Estate_Property_Report_%s' % (object.id)</field>
+    </record>
+
+    <template id="report_property_pdf">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page">
+                    <h2 style="margin-bottom: 6px; color: #0f172a;">Estate Property Report</h2>
+                    <div style="margin-bottom: 14px; color: #475569;">
+                        <strong>Filters:</strong>
+                        <span t-esc="filter_summary" />
+                    </div>
+
+                    <table class="table table-sm" style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background-color: #e2e8f0;">
+                                <th style="padding: 6px; border: 1px solid #cbd5e1;">Title</th>
+                                <th style="padding: 6px; border: 1px solid #cbd5e1;">Type</th>
+                                <th style="padding: 6px; border: 1px solid #cbd5e1;">State</th>
+                                <th style="padding: 6px; border: 1px solid #cbd5e1;">Expected</th>
+                                <th style="padding: 6px; border: 1px solid #cbd5e1;">Selling</th>
+                                <th style="padding: 6px; border: 1px solid #cbd5e1;">Best Offer</th>
+                                <th style="padding: 6px; border: 1px solid #cbd5e1;">Salesperson</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="properties" t-as="property_record">
+                                <td style="padding: 6px; border: 1px solid #e2e8f0;">
+                                    <span t-esc="property_record.name" />
+                                </td>
+                                <td style="padding: 6px; border: 1px solid #e2e8f0;">
+                                    <span t-esc="property_record.property_type_id.name or '-'" />
+                                </td>
+                                <td style="padding: 6px; border: 1px solid #e2e8f0;">
+                                    <span t-esc="property_record.state" />
+                                </td>
+                                <td style="padding: 6px; border: 1px solid #e2e8f0;">
+                                    <span t-esc="property_record.expected_price" />
+                                </td>
+                                <td style="padding: 6px; border: 1px solid #e2e8f0;">
+                                    <span t-esc="property_record.selling_price" />
+                                </td>
+                                <td style="padding: 6px; border: 1px solid #e2e8f0;">
+                                    <span t-esc="property_record.best_price" />
+                                </td>
+                                <td style="padding: 6px; border: 1px solid #e2e8f0;">
+                                    <span t-esc="property_record.salesperson_id.name or '-'" />
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

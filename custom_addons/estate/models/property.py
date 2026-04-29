@@ -70,6 +70,7 @@ class EstateProperty(models.Model):
 
     def action_cancel(self):
         self.ensure_one()
+        self._check_manager_permission('cancel properties')
         self._check_can_be_cancelled()
         self.write({
             'state': 'cancel',
@@ -119,7 +120,11 @@ class EstateProperty(models.Model):
             f"AI recommends offer #{offer.id} ({offer.partner_id.display_name}) "
             f"at {offer.price}. Confidence: {self.ai_recommendation_confidence}%."
         )
-        return self._notify_action(message, 'info')
+        return self._notify_action(
+            message,
+            'info',
+            next_action={'type': 'ir.actions.client', 'tag': 'reload'},
+        )
 
     @api.depends('living_area', 'garden_area')
     def _compute_total_area(self):

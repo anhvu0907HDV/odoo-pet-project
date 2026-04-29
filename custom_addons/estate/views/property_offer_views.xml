@@ -56,12 +56,14 @@
             type="object"
             string="Refuse"
             class="btn-danger o_estate_btn o_estate_btn_refuse"
+            groups="estate.group_estate_manager"
             invisible="state != 'pending'" />
 
           <button name="action_set_pending"
             type="object"
             string="Set to Pending"
             class="btn-secondary o_estate_btn o_estate_btn_pending"
+            groups="estate.group_estate_manager"
             invisible="state != 'refused'" />
 
           <field name="state" widget="statusbar" statusbar_visible="pending,accepted,refused" />

@@ -113,6 +113,7 @@
                         type="object"
                         string="Cancel"
                         class="btn-secondary o_estate_btn o_estate_btn_cancel"
+                        groups="estate.group_estate_manager"
                         invisible="state in ['sold', 'cancel']" />
 
                     <button name="action_archive_property"

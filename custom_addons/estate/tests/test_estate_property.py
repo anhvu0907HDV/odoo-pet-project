@@ -75,12 +75,16 @@ class TestEstateProperty(TransactionCase):
     def test_cancel_resets_sale_data(self):
         offer = self._create_offer(220000, self.partner_1)
         offer.with_user(self.user_manager).action_accept()
-        self.property.action_cancel()
+        self.property.with_user(self.user_manager).action_cancel()
         self.property.invalidate_recordset()
         self.assertEqual(self.property.state, 'cancel')
         self.assertFalse(self.property.buyer_id)
         self.assertEqual(self.property.selling_price, 0)
         self.assertFalse(self.property.sold_date)
+
+    def test_cancel_requires_manager_permission(self):
+        with self.assertRaises(UserError):
+            self.property.with_user(self.user_employee).action_cancel()
 
     def test_offer_price_must_be_higher_than_active_offers(self):
         self._create_offer(210000, self.partner_1)
@@ -89,17 +93,22 @@ class TestEstateProperty(TransactionCase):
 
     def test_offer_price_can_be_below_refused_offer(self):
         offer = self._create_offer(240000, self.partner_1)
-        offer.action_refuse()
+        offer.with_user(self.user_manager).action_refuse()
         second_offer = self._create_offer(210000, self.partner_2)
         self.assertEqual(second_offer.state, 'pending')
 
     def test_refusing_last_active_offer_resets_property_state(self):
         offer = self._create_offer(210000, self.partner_1)
-        offer.action_refuse()
+        offer.with_user(self.user_manager).action_refuse()
         self.property.invalidate_recordset()
         self.assertEqual(self.property.state, 'new')
         self.assertFalse(self.property.buyer_id)
         self.assertEqual(self.property.selling_price, 0)
+
+    def test_refuse_offer_requires_manager_permission(self):
+        offer = self._create_offer(210000, self.partner_1)
+        with self.assertRaises(UserError):
+            offer.with_user(self.user_employee).action_refuse()
 
     def test_selling_price_threshold_constraint(self):
         with self.assertRaises(ValidationError):
