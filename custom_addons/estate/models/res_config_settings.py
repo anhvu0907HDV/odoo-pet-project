@@ -32,3 +32,29 @@ class ResConfigSettings(models.TransientModel):
         config_parameter='estate.gemini_api_key',
         help='API key used for AI offer recommendation.',
     )
+
+    estate_ollama_base_url = fields.Char(
+        string='Estate Ollama Base URL',
+        config_parameter='estate.ollama_base_url',
+        default='http://localhost:11434',
+        help='Base URL for Ollama server (example: http://localhost:11434).',
+    )
+    estate_ollama_model = fields.Char(
+        string='Estate Ollama Model',
+        config_parameter='estate.ollama_model',
+        default='mistral',
+        help='Model name used for generation (example: mistral).',
+    )
+    estate_ollama_embed_model = fields.Char(
+        string='Estate Ollama Embedding Model',
+        config_parameter='estate.ollama_embed_model',
+        default='nomic-embed-text',
+        help='Embedding model name (example: nomic-embed-text).',
+    )
+    estate_embedding_provider = fields.Selection(
+        selection=[('ollama', 'Ollama')],
+        string='Estate Embedding Provider',
+        config_parameter='estate.embedding_provider',
+        default='ollama',
+        help='Provider used to generate embeddings for RAG.',
+    )

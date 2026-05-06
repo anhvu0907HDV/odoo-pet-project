@@ -26,6 +26,7 @@ Interview-ready real estate pet project:
         'data/mail_templates.xml',
         'data/cron.xml',
         'views/property_type_views.xml',
+        'views/rag_wizard_views.xml',
         'views/property_views.xml',
         'views/property_search.xml',
         'views/property_offer_views.xml',
@@ -41,6 +42,8 @@ Interview-ready real estate pet project:
     'assets': {
         'web.assets_backend': [
             'estate/static/src/scss/estate_kanban.scss',
+            'estate/static/src/js/generate_description_widget.js',
+            'estate/static/src/xml/generate_description_widget.xml',
         ],
     },
 }

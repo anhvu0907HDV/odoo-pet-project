@@ -55,7 +55,7 @@
                             </div>
 
                             <div class="o_estate_property_subtitle">
-                                <i class="fa fa-building me-1" />
+                                <i class="fa fa-building me-1" title="Property type" />
                                 <field name="property_type_id" />
                             </div>
 
@@ -75,17 +75,17 @@
                             </div>
 
                             <div class="o_estate_property_meta">
-                                <span><i class="fa fa-bed me-1" /> <field name="bedrooms" /> beds</span>
-                                <span><i class="fa fa-home me-1" /> <field name="total_area" /> m2</span>
+                                <span><i class="fa fa-bed me-1" title="Bedrooms" /> <field name="bedrooms" /> beds</span>
+                                <span><i class="fa fa-home me-1" title="Total area" /> <field name="total_area" /> m2</span>
                             </div>
 
                             <div class="o_estate_property_footer">
-                                <span><i class="fa fa-user me-1" /> <field name="salesperson_id" /></span>
-                                <span><i class="fa fa-tag me-1" /> <field name="offer_count" /> offers</span>
+                                <span><i class="fa fa-user me-1" title="Salesperson" /> <field name="salesperson_id" /></span>
+                                <span><i class="fa fa-tag me-1" title="Offers" /> <field name="offer_count" /> offers</span>
                             </div>
 
                             <div class="o_estate_property_tags">
-                                <field name="tag_ids" widget="many2many_tags" />
+                                <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}" />
                             </div>
 
                             <div t-if="!record.active.raw_value" class="o_estate_archived_badge">Archived</div>
@@ -144,6 +144,14 @@
                             class="oe_stat_button o_estate_btn o_estate_btn_stat">
                             <field name="offer_count" widget="statinfo" string="Offers" />
                         </button>
+                        <button name="%(action_estate_rag_ask_wizard)d"
+                            type="action"
+                            class="oe_stat_button o_estate_btn o_estate_btn_ai"
+                            icon="fa-comments">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Ask AI</span>
+                            </div>
+                        </button>
                     </div>
 
                     <group>
@@ -167,9 +175,27 @@
                             <field name="active" />
                         </group>
                     </group>
-                    <group>
-                        <field name="description" />
-                    </group>
+                    <div class="o_estate_desc_panel">
+                        <div class="o_estate_desc_panel_header">
+                            <div class="o_estate_desc_title_block">
+                                <h3>Description</h3>
+                                <span class="text-muted">Marketing copy for the listing. Generate a draft, then tweak and save.</span>
+                            </div>
+                            <div class="o_estate_desc_actions">
+                                <field name="ai_description_generate_preview" widget="estate_generate_description_button" nolabel="1" />
+                            </div>
+                        </div>
+                        <div class="o_estate_desc_controls">
+                            <field name="ai_description_tone" readonly="1" class="o_estate_desc_control" />
+                            <field name="ai_description_language" class="o_estate_desc_control" />
+                        </div>
+                        <div class="o_estate_desc_rules">
+                            <field name="ai_description_rules" placeholder="Optional: add extra rules (target audience, must-include points, avoid phrases, etc.)." />
+                        </div>
+                        <div class="o_estate_desc_text">
+                            <field name="description" placeholder="Describe the property, or use AI to generate marketing copy." />
+                        </div>
+                    </div>
 
                     <separator string="AI Insights" />
                     <div class="o_estate_ai_panel">
@@ -216,13 +242,35 @@
                                     delete="0"
                                     class="o_estate_offer_inline_tree"
                                     decoration-success="state == 'accepted'"
-                                    decoration-muted="state == 'refused'">
+                                    decoration-muted="state == 'refused'"
+                                    decoration-info="state == 'pending'">
                                     <field name="company_id" invisible="1" />
-                                    <field name="price" />
+                                    <field name="currency_id" invisible="1" />
+                                    <field name="price" widget="monetary" options="{'currency_field': 'currency_id'}" />
                                     <field name="partner_id" />
-                                    <field name="validity" />
-                                    <field name="deadline" />
-                                    <field name="state" />
+                                    <field name="partner_email" optional="show" />
+                                    <field name="validity" optional="show" />
+                                    <field name="deadline" optional="show" />
+                                    <field name="state" widget="badge" />
+
+                                    <button name="action_accept"
+                                        type="object"
+                                        string="Accept"
+                                        class="btn btn-sm btn-outline-success"
+                                        groups="estate.group_estate_manager"
+                                        invisible="state != 'pending'" />
+                                    <button name="action_refuse"
+                                        type="object"
+                                        string="Refuse"
+                                        class="btn btn-sm btn-outline-danger"
+                                        groups="estate.group_estate_manager"
+                                        invisible="state != 'pending'" />
+                                    <button name="action_set_pending"
+                                        type="object"
+                                        string="Set Pending"
+                                        class="btn btn-sm btn-outline-secondary"
+                                        groups="estate.group_estate_manager"
+                                        invisible="state != 'refused'" />
                                 </tree>
                             </field>
                         </page>

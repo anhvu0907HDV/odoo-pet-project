@@ -24,7 +24,7 @@ class OpenRouterProvider(BaseAiProvider):
     URL = 'https://openrouter.ai/api/v1/chat/completions'
     TIMEOUT = 25
 
-    def generate(self, prompt):
+    def generate(self, prompt, *, json_mode=False):
         api_key = self._get_config('estate.openrouter_api_key')
         if not api_key:
             raise RuntimeError('OpenRouter API key is missing.')
@@ -33,8 +33,9 @@ class OpenRouterProvider(BaseAiProvider):
             'model': model,
             'messages': [{'role': 'user', 'content': prompt}],
             'temperature': 0.1,
-            'response_format': {'type': 'json_object'},
         }
+        if json_mode:
+            payload['response_format'] = {'type': 'json_object'}
         try:
             body = self._post_json(
                 self.URL,
@@ -106,3 +107,72 @@ class GeminiProvider(BaseAiProvider):
             .get('parts', [{}])[0]
             .get('text', '')
         )
+
+
+class OllamaProvider(BaseAiProvider):
+    TIMEOUT = 60
+
+    def generate(self, prompt):
+        base_url = (self._get_config('estate.ollama_base_url', 'http://localhost:11434') or '').rstrip('/')
+        model = self._get_config('estate.ollama_model', 'mistral')
+        if not base_url:
+            raise RuntimeError('Ollama base URL is missing.')
+        payload = {
+            'model': model,
+            'prompt': prompt,
+            'stream': False,
+        }
+        body = self._post_json(
+            f'{base_url}/api/generate',
+            payload,
+            headers={'Content-Type': 'application/json'},
+            timeout=self.TIMEOUT,
+        )
+        return body.get('response', '')
+
+    def embed(self, text):
+        base_url = (self._get_config('estate.ollama_base_url', 'http://localhost:11434') or '').rstrip('/')
+        model = self._get_config('estate.ollama_embed_model', 'nomic-embed-text')
+        if not base_url:
+            raise RuntimeError('Ollama base URL is missing.')
+        text = text or ''
+
+        # Ollama API compatibility:
+        # - Older versions: POST /api/embeddings -> {"embedding":[...]} with payload {"model","prompt"}
+        # - Newer versions: POST /api/embed -> {"embeddings":[[...]]} with payload {"model","input"}
+        try:
+            body = self._post_json(
+                f'{base_url}/api/embeddings',
+                {'model': model, 'prompt': text},
+                headers={'Content-Type': 'application/json'},
+                timeout=self.TIMEOUT,
+            )
+            embedding = body.get('embedding')
+            if isinstance(embedding, list) and embedding:
+                return embedding
+        except error.HTTPError as http_error:
+            if http_error.code != 404:
+                raw_body = self._read_http_error_body(http_error, 220)
+                raise RuntimeError(f'Ollama embeddings request failed ({http_error.code}): {raw_body}') from http_error
+        except Exception:
+            # fall through to /api/embed
+            pass
+
+        try:
+            body = self._post_json(
+                f'{base_url}/api/embed',
+                {'model': model, 'input': text},
+                headers={'Content-Type': 'application/json'},
+                timeout=self.TIMEOUT,
+            )
+            embeddings = body.get('embeddings')
+            if isinstance(embeddings, list) and embeddings and isinstance(embeddings[0], list) and embeddings[0]:
+                return embeddings[0]
+            embedding = body.get('embedding')
+            if isinstance(embedding, list) and embedding:
+                return embedding
+        except error.HTTPError as http_error:
+            raw_body = self._read_http_error_body(http_error, 220)
+            raise RuntimeError(f'Ollama embed request failed ({http_error.code}): {raw_body}') from http_error
+
+        raise RuntimeError('Ollama embeddings returned empty embedding.')

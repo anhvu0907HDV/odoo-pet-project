@@ -124,3 +124,17 @@ class TestEstateProperty(TransactionCase):
         self.assertEqual(recommendation['offer'], offer)
         self.assertEqual(recommendation['provider'], 'fallback')
         self.assertIn('Fallback recommendation used', recommendation['reasoning'])
+
+    def test_ai_generate_description_updates_property_description(self):
+        response = '{"description": "Warm, family-friendly and close to daily conveniences."}'
+        with patch(
+            'odoo.addons.estate.models.ai_service.EstateAiService._call_openrouter',
+            return_value=response,
+        ):
+            result = self.env['estate.ai.service'].preview_property_description({
+                'name': self.property.name,
+                'expected_price': self.property.expected_price,
+                'style': 'family',
+                'language': 'en',
+            })
+        self.assertIn('family-friendly', (result.get('description') or '').lower())

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="estate.GenerateDescriptionButton">
+        <button type="button"
+            class="btn btn-primary o_estate_btn o_estate_btn_ai_main"
+            t-on-click="onClick">
+            <i class="fa fa-magic me-1" />
+            Generate Description
+        </button>
+    </t>
+</templates>

@@ -7,3 +7,6 @@ access_estate_property_type_agent,estate.property.type.agent,model_estate_proper
 access_estate_property_type_manager,estate.property.type.manager,model_estate_property_type,estate.group_estate_manager,1,1,1,1
 access_estate_property_tag_agent,estate.property.tag.agent,model_estate_property_tag,estate.group_estate_user,1,0,0,0
 access_estate_property_tag_manager,estate.property.tag.manager,model_estate_property_tag,estate.group_estate_manager,1,1,1,1
+access_estate_rag_chunk_manager,estate.rag.chunk.manager,model_estate_rag_chunk,estate.group_estate_manager,1,0,0,0
+access_estate_rag_wizard_agent,estate.rag.ask.wizard.agent,model_estate_rag_ask_wizard,estate.group_estate_user,1,1,1,0
+access_estate_rag_wizard_manager,estate.rag.ask.wizard.manager,model_estate_rag_ask_wizard,estate.group_estate_manager,1,1,1,0

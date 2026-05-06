@@ -111,6 +111,13 @@
 
 .o_form_view.o_estate_property_form,
 .o_form_view.o_estate_offer_form {
+    --estate-primary: #2563eb;
+    --estate-primary-2: #7c3aed;
+    --estate-surface: #ffffff;
+    --estate-muted: #64748b;
+    --estate-border: #e2e8f0;
+    --estate-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+
     .o_estate_btn {
         border-radius: 10px;
         font-weight: 600;
@@ -124,8 +131,9 @@
     }
 
     .o_estate_btn_ai_main {
-        background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
-        border-color: #2563eb;
+        background: linear-gradient(135deg, var(--estate-primary) 0%, var(--estate-primary-2) 100%);
+        border-color: var(--estate-primary);
+        color: #fff;
     }
 
     .o_estate_btn_sold {
@@ -143,9 +151,9 @@
     .o_estate_btn_unarchive,
     .o_estate_btn_pending,
     .o_estate_btn_stat {
-        background: #f8fafc;
-        border-color: #cbd5e1;
-        color: #1e293b;
+        background: var(--estate-surface);
+        border-color: var(--estate-border);
+        color: #0f172a;
     }
 
     .o_estate_btn_accept {
@@ -159,14 +167,14 @@
     }
 
     .o_estate_btn_ai {
-        background: #e0e7ff;
-        border-color: #a5b4fc;
+        background: #eef2ff;
+        border-color: #c7d2fe;
         color: #3730a3;
     }
 
     .o_form_sheet {
         border-radius: 14px;
-        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+        box-shadow: var(--estate-shadow);
     }
 
     .o_statusbar_status .btn {
@@ -198,6 +206,57 @@
     .o_field_widget[name="description"] textarea {
         border-radius: 10px;
         min-height: 110px;
+    }
+
+    .o_estate_desc_panel {
+        background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+        border: 1px solid var(--estate-border);
+        border-radius: 14px;
+        margin: 10px 0 14px;
+        padding: 14px;
+    }
+
+    .o_estate_desc_panel_header {
+        align-items: flex-start;
+        display: flex;
+        gap: 12px;
+        justify-content: space-between;
+        margin-bottom: 10px;
+    }
+
+    .o_estate_desc_title_block h3 {
+        color: #0f172a;
+        font-size: 16px;
+        margin: 0;
+    }
+
+    .o_estate_desc_title_block .text-muted {
+        color: var(--estate-muted);
+        display: inline-block;
+        font-size: 12px;
+        margin-top: 2px;
+    }
+
+    .o_estate_desc_controls {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin-bottom: 10px;
+    }
+
+    .o_estate_desc_rules {
+        margin-bottom: 10px;
+    }
+
+    .o_estate_desc_rules .o_field_text textarea {
+        background: #f8fafc;
+        border-radius: 10px;
+        min-height: 72px;
+    }
+
+    .o_estate_desc_text .o_field_text textarea {
+        border-radius: 10px;
+        min-height: 140px;
     }
 
     .o_estate_ai_panel {
@@ -262,6 +321,12 @@
         border-radius: 8px;
         min-height: 88px;
     }
+
+    .o_estate_offer_inline_tree .btn {
+        border-radius: 999px;
+        font-weight: 600;
+        padding: 2px 10px;
+    }
 }
 
 .o_list_view.o_estate_property_tree,
@@ -291,5 +356,10 @@
         color: #1e1b4b;
         font-size: 20px;
         margin: 0;
+    }
+
+    .o_notebook .nav-link {
+        border-radius: 10px 10px 0 0;
+        font-weight: 600;
     }
 }

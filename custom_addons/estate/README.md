@@ -104,3 +104,31 @@ python odoo-bin -c D:\odoo-pet-project\odoo.conf -d estate_test_db -u estate --t
 - Add concurrency-focused tests (simultaneous accept attempts).
 - Add richer record rules for advanced ownership/team scenarios.
 - Add recommendation history log for full AI audit trail.
+
+---
+
+## 9) Local AI + RAG (Interview Demo)
+
+This module supports local AI via **Ollama** (default base URL: `http://localhost:11434`) and a minimal **RAG** demo using **pgvector** inside PostgreSQL.
+
+### Settings
+- `Settings → Real Estate`
+  - Set **AI Provider** to `Ollama`
+  - Configure:
+    - `Ollama Base URL` (default `http://localhost:11434`)
+    - `Ollama Model` (example: `mistral`)
+  - RAG Embeddings:
+    - `Embedding Provider`: `Ollama`
+    - `Ollama Embedding Model`: `nomic-embed-text`
+
+### RAG demo flow
+1. Open a Property form.
+2. Click `Ask AI` (smart button).
+3. Click `Index Knowledge` (builds chunks from property + offers).
+4. Ask a question like:
+   - "Which offer is the highest and when does it expire?"
+   - "Summarize the current status and key risks."
+
+### Note
+- The RAG table is created lazily; it attempts `CREATE EXTENSION vector`.
+- If your PostgreSQL doesn't have pgvector installed, the module will log a warning and RAG won't work until pgvector is available.

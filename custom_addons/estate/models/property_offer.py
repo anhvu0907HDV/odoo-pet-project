@@ -16,6 +16,7 @@ class EstatePropertyOffer(models.Model):
 
     price = fields.Float(required=True)
     partner_id = fields.Many2one('res.partner', required=True, check_company=True)
+    partner_email = fields.Char(related='partner_id.email', readonly=True, string='Email')
     property_id = fields.Many2one('estate.property', required=True, ondelete='cascade', check_company=True)
     company_id = fields.Many2one('res.company', related='property_id.company_id', store=True, readonly=True)
     currency_id = fields.Many2one('res.currency', related='property_id.currency_id', readonly=True)
@@ -116,7 +117,11 @@ class EstatePropertyOffer(models.Model):
         self._send_offer_email('estate.email_template_offer_accepted')
         _logger.info(f'=== DEBUG: About to send email for refused offers ===')
         refused_offers._send_offer_email('estate.email_template_offer_refused')
-        return self._notify_action("Offer accepted successfully.", "success")
+        return self._notify_action(
+            "Offer accepted successfully.",
+            "success",
+            next_action={'type': 'ir.actions.client', 'tag': 'soft_reload'},
+        )
 
     def action_refuse(self):
         self.ensure_one()
@@ -126,19 +131,31 @@ class EstatePropertyOffer(models.Model):
         self.write({'state': 'refused'})
         self._sync_property_state_after_refuse()
         self._send_offer_email('estate.email_template_offer_refused')
-        return self._notify_action("Offer has been refused.", "warning")
+        return self._notify_action(
+            "Offer has been refused.",
+            "warning",
+            next_action={'type': 'ir.actions.client', 'tag': 'soft_reload'},
+        )
 
     def action_set_pending(self):
         self.ensure_one()
         self._check_manager_permission('set offers to pending')
         if self.state == 'pending':
-            return self._notify_action("Offer is already pending.", "info")
+            return self._notify_action(
+                "Offer is already pending.",
+                "info",
+                next_action={'type': 'ir.actions.client', 'tag': 'soft_reload'},
+            )
         if self.state == 'accepted':
             raise UserError("Cannot reset an accepted offer to pending.")
         self.write({'state': 'pending'})
         if self.property_id.state == 'new':
             self.property_id.state = 'offer'
-        return self._notify_action("Offer moved back to pending.", "info")
+        return self._notify_action(
+            "Offer moved back to pending.",
+            "info",
+            next_action={'type': 'ir.actions.client', 'tag': 'soft_reload'},
+        )
 
     def _sync_property_state_after_refuse(self):
         self.ensure_one()

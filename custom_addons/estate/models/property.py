@@ -56,6 +56,38 @@ class EstateProperty(models.Model):
     ai_provider = fields.Char(string='AI Provider', copy=False)
     ai_last_analysis_at = fields.Datetime(string='AI Last Analysis', copy=False)
 
+    ai_description_tone = fields.Selection(
+        selection=[
+            ('luxury', 'Luxury'),
+            ('family', 'Family'),
+            ('investment', 'Investment'),
+            ('urgent', 'Urgent'),
+        ],
+        string='AI Tone',
+        compute='_compute_ai_description_tone',
+        store=False,
+    )
+    ai_description_language = fields.Selection(
+        selection=[
+            ('en', 'English'),
+            ('vi', 'Vietnamese'),
+        ],
+        string='AI Language',
+        default=lambda self: 'vi' if (self.env.user.lang or '').lower().startswith('vi') else 'en',
+        tracking=True,
+    )
+    ai_description_rules = fields.Text(
+        string='AI Rules',
+        help='Extra instructions to control the generated description (tone hints, target audience, avoid/require phrases, etc.).',
+    )
+    ai_description_provider = fields.Char(string='AI Description Provider', copy=False)
+    ai_description_last_generated_at = fields.Datetime(string='AI Description Last Generated', copy=False)
+    ai_description_generate_preview = fields.Boolean(
+        string='Generate Description',
+        compute='_compute_ai_description_generate_preview',
+        store=False,
+    )
+
     _sql_constraints = [
         ('estate_property_expected_price_positive', 'CHECK(expected_price > 0)', 'Expected price must be greater than 0.'),
         ('estate_property_selling_price_positive', 'CHECK(selling_price >= 0)', 'Selling price cannot be negative.'),
@@ -126,10 +158,60 @@ class EstateProperty(models.Model):
             next_action={'type': 'ir.actions.client', 'tag': 'reload'},
         )
 
+    def action_ai_generate_description(self):
+        self.ensure_one()
+        if not (self.env.user.has_group('estate.group_estate_user') or self.env.user.has_group('base.group_system')):
+            raise UserError('Only Estate users can generate property descriptions.')
+        result = self.env['estate.ai.service'].generate_property_description(
+            self,
+            style=self.ai_description_tone,
+            language=self.ai_description_language,
+            rules=self.ai_description_rules,
+        )
+        self.write({
+            'description': result.get('description'),
+            'ai_description_provider': result.get('provider'),
+            'ai_description_last_generated_at': fields.Datetime.now(),
+        })
+        return self._notify_action(
+            'Property description generated.',
+            'success' if result.get('provider') != 'fallback' else 'warning',
+            next_action={'type': 'ir.actions.client', 'tag': 'reload'},
+        )
+
     @api.depends('living_area', 'garden_area')
     def _compute_total_area(self):
         for record in self:
             record.total_area = record.living_area + record.garden_area
+
+    def _compute_ai_description_tone(self):
+        for record in self:
+            tag_names = [name.lower() for name in record.tag_ids.mapped('name')]
+            has_investment = any('invest' in name or 'roi' in name for name in tag_names)
+            if has_investment:
+                record.ai_description_tone = 'investment'
+                continue
+
+            today = fields.Date.context_today(record)
+            availability_date = record.availability_date or today
+            is_urgent = record.state in ('new', 'offer') and availability_date <= (today + timedelta(days=30))
+            if is_urgent:
+                record.ai_description_tone = 'urgent'
+                continue
+
+            if (record.bedrooms or 0) >= 3:
+                record.ai_description_tone = 'family'
+                continue
+
+            if (record.expected_price or 0) >= 1000000:
+                record.ai_description_tone = 'luxury'
+                continue
+
+            record.ai_description_tone = 'family'
+
+    def _compute_ai_description_generate_preview(self):
+        for record in self:
+            record.ai_description_generate_preview = True
 
     @api.depends('offer_ids.price', 'offer_ids.state')
     def _compute_best_price(self):

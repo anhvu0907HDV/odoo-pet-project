@@ -22,6 +22,20 @@
                         <setting string="Gemini API Key" help="API key for Gemini offer recommendation." invisible="estate_ai_provider != 'gemini'">
                             <field name="estate_gemini_api_key" password="True" placeholder="AIza..." />
                         </setting>
+                        <setting string="Ollama Base URL" help="Local Ollama server base URL." invisible="estate_ai_provider != 'ollama'">
+                            <field name="estate_ollama_base_url" placeholder="http://localhost:11434" />
+                        </setting>
+                        <setting string="Ollama Model" help="Local model used for generation." invisible="estate_ai_provider != 'ollama'">
+                            <field name="estate_ollama_model" placeholder="mistral" />
+                        </setting>
+                    </block>
+                    <block title="RAG (Local Knowledge)">
+                        <setting string="Embedding Provider" help="Provider used to create embeddings for RAG.">
+                            <field name="estate_embedding_provider" />
+                        </setting>
+                        <setting string="Ollama Embedding Model" help="Local model used for embeddings (RAG).">
+                            <field name="estate_ollama_embed_model" placeholder="nomic-embed-text" />
+                        </setting>
                     </block>
                 </app>
             </xpath>
